@@ -1,4 +1,4 @@
-MrGo
+Mr. Go
 ====
 
-My take on MapReduce, in Go... MrGo!
+My take on MapReduce, in Go... Mr. Go!
