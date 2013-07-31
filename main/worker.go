@@ -6,8 +6,8 @@ import (
 	"io"
 	"log"
 
-	MR "mapreduce/MrGo/mr"
-	USER "mapreduce/MrGo/usr"
+	MR "github.com/verdverm/MrGo/mr"
+	USER "github.com/verdverm/MrGo/usr"
 )
 
 var (

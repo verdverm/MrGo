@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 
-	MR "mapreduce/MrGo/mr"
+	MR "github.com/verdverm/MrGo/mr"
 )
 
 var (
