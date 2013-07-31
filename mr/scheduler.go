@@ -30,6 +30,7 @@ func (hs HostState) String() string {
 }
 
 type Host struct {
+	user  string
 	name  string
 	state HostState
 
@@ -124,7 +125,7 @@ func (s *Scheduler) readHostFile() {
 }
 
 func (h *Host) getHostState() HostState {
-	cmd := exec.Command("ssh", "-o StrictHostKeyChecking=no", "-o ConnectTimeout=6", "aworm1@"+h.name, "ls")
+	cmd := exec.Command("ssh", "-o StrictHostKeyChecking=no", "-o ConnectTimeout=6", h.name, "ls")
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
