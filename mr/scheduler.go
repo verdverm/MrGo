@@ -71,12 +71,12 @@ func (s *Scheduler) Run() {
 	for i := 0; i < s.config.NumMaps; i++ {
 		t := new(Task)
 		t.wkr_args = []string{
-			"gocode/bin/MrWorker",
+			"MrWorker",
 			"-task=map",
 			fmt.Sprintf("-id=%d", i),
 			fmt.Sprintf("-reduces=%d", s.config.NumReduces),
 			fmt.Sprintf("-phases=%d", s.config.NumPhases),
-			fmt.Sprintf("-dir=%s", s.config.Temp),
+			fmt.Sprintf("-dir=%s", s.config.Base),
 		}
 		// setup t
 		tasks <- t
@@ -236,11 +236,22 @@ type Task struct {
 
 func (t *Task) Run() {
 
-	ssh_args := strings.Join(t.ssh_args, " ")
+	// ssh_args := strings.Join(t.ssh_args, " ")
 
-	fmt.Println(ssh_args)
+	fmt.Println(len(t.ssh_args), t.ssh_args)
 
-	cmd := exec.Command("/bin/sh", ssh_args)
+	cmd := exec.Command(
+		t.ssh_args[0],
+		t.ssh_args[1],
+		t.ssh_args[2],
+		t.ssh_args[3],
+		t.ssh_args[4],
+		// t.ssh_args[5],
+		// t.ssh_args[6],
+		// t.ssh_args[7],
+		// t.ssh_args[8],
+		// t.ssh_args[9],
+	)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 
