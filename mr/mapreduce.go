@@ -29,13 +29,13 @@ func (mr *MapReduceBase) Setup(task string, task_id, reduces, phases int, tmpdir
 }
 
 func (mr *MapReduceBase) Init() {
-	fmt.Println("Init", mr.TaskId)
+	fmt.Println("Base Init", mr.TaskId)
 }
 
 func (mr *MapReduceBase) Map() {
-	fmt.Println("Mapper ", mr.TaskId)
+	fmt.Println("Base Mapper", mr.TaskId)
 }
 
 func (mr *MapReduceBase) Reduce() {
-	fmt.Println("Reducer", mr.TaskId)
+	fmt.Println("Base Reducer", mr.TaskId)
 }

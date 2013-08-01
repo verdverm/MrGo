@@ -15,6 +15,7 @@ const (
 	HOST_NULL HostState = iota
 	HOST_LIVE
 	HOST_DEAD
+	HOST_XXXX
 )
 
 func (hs HostState) String() string {
@@ -25,11 +26,14 @@ func (hs HostState) String() string {
 		return "HOST_LIVE"
 	case HOST_DEAD:
 		return "HOST_DEAD"
+	case HOST_XXXX:
+		return "HOST_XXXX"
 	}
 	return "HOST_NULL"
 }
 
 type Host struct {
+	id    int
 	user  string
 	name  string
 	state HostState
@@ -91,17 +95,24 @@ func (s *Scheduler) SetConfig(c MrGoConfig) {
 }
 
 func (s *Scheduler) Init() {
-	fmt.Println("Scheduler Initializing\n----------------------")
-	s.readHostFile()
+	fmt.Println("Scheduler Initializing\n----------------------\n")
+	s.initHostInfo()
+	fmt.Println("\n\n")
 }
 
 func (s *Scheduler) Run() {
-	fmt.Println("Scheduler Starting\n------------------")
+	fmt.Println("Scheduler Starting\n------------------\n")
+
+	fmt.Println("Mapping...\n")
+
+	fmt.Println("Reducing...\n")
 
 	fmt.Println("Scheduler Done")
 }
 
-func (s *Scheduler) readHostFile() {
+func (s *Scheduler) initHostInfo() {
+
+	// read file
 	data, err := ioutil.ReadFile(s.config.HostFile)
 	if err != nil {
 		log.Fatalln(err)
@@ -109,31 +120,53 @@ func (s *Scheduler) readHostFile() {
 
 	hostnames := strings.Split(string(data), "\n")
 
-	s.hosts = make([]*Host, len(hostnames))
-	for _, h := range hostnames {
+	s.hosts = make([]*Host, 0)
+	done := make(chan int, 128)
+
+	for i, h := range hostnames {
 		h = strings.TrimSpace(h)
 		if len(h) < 1 {
 			continue
 		}
 		host := new(Host)
+		host.id = i
 		host.name = h
-		host.state = host.getHostState()
-
-		fmt.Println(host)
+		host.state = HOST_NULL
+		if h[0] == '#' {
+			host.name = strings.TrimSpace(h[1:])
+			host.state = HOST_XXXX
+		}
 		s.hosts = append(s.hosts, host)
+
+		go func() {
+			if host.state != HOST_XXXX {
+				host.getHostState()
+			}
+			done <- 1
+		}()
 	}
+
+	for i := 0; i < len(s.hosts); i++ {
+		<-done
+	}
+
+	for _, h := range s.hosts {
+		fmt.Printf("%s:  %s\n", h.name, h.state)
+	}
+
 }
 
-func (h *Host) getHostState() HostState {
+func (h *Host) getHostState() {
 	cmd := exec.Command("ssh", "-o StrictHostKeyChecking=no", "-o ConnectTimeout=6", h.name, "ls")
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
 	if err != nil {
 		// log.Println(err)
-		return HOST_DEAD
+		h.state = HOST_DEAD
+		return
 	}
 	// fmt.Printf("host return: %q\n", out.String())
 
-	return HOST_LIVE
+	h.state = HOST_LIVE
 }
