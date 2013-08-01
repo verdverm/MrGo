@@ -6,7 +6,6 @@ import (
 	"io"
 	"log"
 
-	MR "github.com/verdverm/MrGo/mr"
 	USER "github.com/verdverm/MrGo/usr"
 )
 
@@ -15,7 +14,7 @@ var (
 	arg_taskid = flag.Int("id", -1, "id of the current task")
 
 	arg_reduces = flag.Int("reduces", 1, "number of reducer processes")
-	arg_phases  = flag.Int("phases", 1, "number of reduce stages")
+	arg_phase   = flag.Int("phase", 1, "current phase of reduce stages")
 
 	arg_tmpdir = flag.String("tmpdir", "tmp", "directory for intermediate files")
 )
@@ -31,12 +30,13 @@ func main() {
 	// printFlags(os.Stdout)
 	checkFlags()
 
-	// ONLY EDIT THIS LINE vvv
+	// ONLY EDIT THIS LINE if you change the name of MyMapReduce
 	/**********************/
 	mr := new(USER.MyMapReduce)
 	/**********************/
 
-	setupMR(mr)
+	mr.Setup(*arg_task, *arg_taskid, *arg_reduces, *arg_phase, *arg_tmpdir)
+	mr.Init()
 
 	// start mapping process
 	if *arg_task == "map" {
@@ -51,10 +51,6 @@ func main() {
 	}
 
 	panic("Should Not Get Here")
-}
-
-func setupMR(mr MR.MapReduce) {
-	mr.Setup(*arg_task, *arg_taskid, *arg_reduces, *arg_phases, *arg_tmpdir)
 }
 
 func printFlags(w io.Writer) {
