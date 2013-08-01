@@ -22,7 +22,7 @@ var (
 	arg_phases  = flag.Int("phases", 1, "current phase of reduce stages")
 	arg_phase   = flag.Int("phase", 1, "current phase of reduce stages")
 
-	arg_tmpdir = flag.String("tmpdir", "tmp", "directory for intermediate files")
+	arg_dir = flag.String("dir", "MrGo", "base directory for finding files")
 )
 
 func init() {
@@ -55,7 +55,7 @@ func runMap() {
 	// for parallel execution on a single node
 	numCPU := runtime.NumCPU()
 	// open & partition file for each Map goroutine
-	inFn := fmt.Sprintf("file%4d", *arg_taskid)
+	inFn := fmt.Sprintf("%s/file%4d", *arg_dir, *arg_taskid)
 	data, err := ioutil.ReadFile(inFn)
 	if err != nil {
 		log.Fatalln(err)
@@ -81,7 +81,7 @@ func runMap() {
 
 	for i := 0; i < numCPU; i++ {
 		result := <-done
-		outFn := fmt.Sprintf("%s/temp_t%4d_p%2d_i%2d", *arg_tmpdir, *arg_taskid, *arg_phases, i)
+		outFn := fmt.Sprintf("%s/tmp/temp_t%4d_p%2d_i%2d", *arg_dir, *arg_taskid, *arg_phases, i)
 		ioutil.WriteFile(outFn, []byte(result), 0644)
 	}
 }

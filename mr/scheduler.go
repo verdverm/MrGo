@@ -71,11 +71,12 @@ func (s *Scheduler) Run() {
 	for i := 0; i < s.config.NumMaps; i++ {
 		t := new(Task)
 		t.wkr_args = []string{
+			"gocode/bin/MrWorker",
 			"-task=map",
 			fmt.Sprintf("-id=%d", i),
 			fmt.Sprintf("-reduces=%d", s.config.NumReduces),
 			fmt.Sprintf("-phases=%d", s.config.NumPhases),
-			fmt.Sprintf("-tmpdir=%q", s.config.Temp),
+			fmt.Sprintf("-tmpdir=%s", s.config.Temp),
 		}
 		// setup t
 		tasks <- t
@@ -95,11 +96,12 @@ func runner(host *Host, tasks chan *Task, done chan int) {
 	for t := range tasks {
 
 		t.ssh_args = make([]string, 0)
+		t.ssh_args = append(t.ssh_args, "ssh")
 		t.ssh_args = append(t.ssh_args, "-o StrictHostKeyChecking=no")
 		t.ssh_args = append(t.ssh_args, "-o ConnectTimeout=6")
 		t.ssh_args = append(t.ssh_args, host.name)
-		t.ssh_args = append(t.ssh_args, "MrWorker")
-		t.ssh_args = append(t.ssh_args, t.wkr_args...)
+		wkr_args := strings.Join(t.wkr_args, " ")
+		t.ssh_args = append(t.ssh_args, wkr_args)
 
 		t.Run()
 
@@ -233,10 +235,12 @@ type Task struct {
 }
 
 func (t *Task) Run() {
-	fmt.Println("ssh", t.ssh_args)
-	// return
 
-	cmd := exec.Command("ssh", t.ssh_args...)
+	ssh_args := strings.Join(t.ssh_args, " ")
+
+	fmt.Println(ssh_args)
+
+	cmd := exec.Command("/bin/sh", ssh_args)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 
