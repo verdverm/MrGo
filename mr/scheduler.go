@@ -71,7 +71,7 @@ func (s *Scheduler) Run() {
 	for i := 0; i < s.config.NumMaps; i++ {
 		t := new(Task)
 		t.wkr_args = []string{
-			"MrWorker",
+			"gocode/bin/MrWorker",
 			"-task=map",
 			fmt.Sprintf("-id=%d", i),
 			fmt.Sprintf("-reduces=%d", s.config.NumReduces),
@@ -246,6 +246,7 @@ func (t *Task) Run() {
 		t.ssh_args[2],
 		t.ssh_args[3],
 		t.ssh_args[4],
+		// "ls -l",
 		// t.ssh_args[5],
 		// t.ssh_args[6],
 		// t.ssh_args[7],
