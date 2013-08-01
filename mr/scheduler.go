@@ -9,77 +9,12 @@ import (
 	"strings"
 )
 
-type HostState int
-
-const (
-	HOST_NULL HostState = iota
-	HOST_LIVE
-	HOST_DEAD
-	HOST_XXXX
-)
-
-func (hs HostState) String() string {
-	switch hs {
-	case HOST_NULL:
-		return "HOST_NULL"
-	case HOST_LIVE:
-		return "HOST_LIVE"
-	case HOST_DEAD:
-		return "HOST_DEAD"
-	case HOST_XXXX:
-		return "HOST_XXXX"
-	}
-	return "HOST_NULL"
-}
-
-type Host struct {
-	id    int
-	user  string
-	name  string
-	state HostState
-
-	task *Task
-}
-
-func (h *Host) String() string {
-	return fmt.Sprintf("%s:  %s", h.name, h.state)
-}
-
-type TaskState int
-
-const (
-	TASK_NULL TaskState = iota
-	TASK_RUNNING
-	TASK_DONE
-	TASK_FAIL
-)
-
-func (ts TaskState) String() string {
-	switch ts {
-	case TASK_NULL:
-		return "TASK_NULL"
-	case TASK_RUNNING:
-		return "TASK_RUNNING"
-	case TASK_DONE:
-		return "TASK_DONE"
-	case TASK_FAIL:
-		return "TASK_FAIL"
-	}
-	return "TASK_NULL"
-}
-
-type Task struct {
-	host  *Host
-	state TaskState
-
-	task string
-	id   int
-}
-
 type Scheduler struct {
 	config MrGoConfig
 
 	// internal data
+	files []string
+
 	hosts []*Host
 	tasks []*Task
 
@@ -103,14 +38,77 @@ func (s *Scheduler) Init() {
 func (s *Scheduler) Run() {
 	fmt.Println("Scheduler Starting\n------------------\n")
 
+	fmt.Println("Splitting...\n")
+	fmt.Println("assuming split already...")
+
+	// ioutil.ReadDir(s.config.Input)
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+	// etc...
+	// ...
+
 	fmt.Println("Mapping...\n")
+
+	hosts := make([]*Host, 0)
+	for i := 0; len(hosts) < s.config.MaxNodes; i++ {
+		if i == len(s.hosts) {
+			log.Fatalln("Not enough Live Hosts for number of requested nodes")
+		}
+		if s.hosts[i].state == HOST_LIVE {
+			hosts = append(hosts, s.hosts[i])
+		}
+	}
+
+	tasks := make(chan *Task, s.config.NumMaps)
+	done := make(chan int)
+
+	// start runner goroutines
+	for i := 0; i < s.config.MaxNodes; i++ {
+		go runner(hosts[i], tasks, done)
+	}
+
+	for i := 0; i < s.config.NumMaps; i++ {
+		t := new(Task)
+		t.wkr_args = []string{
+			"-task=map",
+			fmt.Sprintf("-id=%d", i),
+			fmt.Sprintf("-reduces=%d", s.config.NumReduces),
+			fmt.Sprintf("-phases=%d", s.config.NumPhases),
+			fmt.Sprintf("-tmpdir=%q", s.config.Temp),
+		}
+		// setup t
+		tasks <- t
+	}
+
+	fmt.Println("Waiting for map to finish")
+	for i := 0; i < s.config.NumMaps; i++ {
+		<-done
+	}
 
 	fmt.Println("Reducing...\n")
 
 	fmt.Println("Scheduler Done")
 }
 
+func runner(host *Host, tasks chan *Task, done chan int) {
+	for t := range tasks {
+
+		t.ssh_args = make([]string, 0)
+		t.ssh_args = append(t.ssh_args, "-o StrictHostKeyChecking=no")
+		t.ssh_args = append(t.ssh_args, "-o ConnectTimeout=6")
+		t.ssh_args = append(t.ssh_args, host.name)
+		t.ssh_args = append(t.ssh_args, "MrWorker")
+		t.ssh_args = append(t.ssh_args, t.wkr_args...)
+
+		t.Run()
+
+		done <- 1
+	}
+}
+
 func (s *Scheduler) initHostInfo() {
+	fmt.Println("Getting host states")
 
 	// read file
 	data, err := ioutil.ReadFile(s.config.HostFile)
@@ -150,10 +148,43 @@ func (s *Scheduler) initHostInfo() {
 		<-done
 	}
 
-	for _, h := range s.hosts {
-		fmt.Printf("%s:  %s\n", h.name, h.state)
-	}
+	// for _, h := range s.hosts {
+	// 	fmt.Printf("%s:  %s\n", h.name, h.state)
+	// }
 
+}
+
+type HostState int
+
+const (
+	HOST_NULL HostState = iota
+	HOST_LIVE
+	HOST_DEAD
+	HOST_XXXX
+)
+
+func (hs HostState) String() string {
+	switch hs {
+	case HOST_NULL:
+		return "HOST_NULL"
+	case HOST_LIVE:
+		return "HOST_LIVE"
+	case HOST_DEAD:
+		return "HOST_DEAD"
+	case HOST_XXXX:
+		return "HOST_XXXX"
+	}
+	return "HOST_NULL"
+}
+
+type Host struct {
+	id    int
+	name  string
+	state HostState
+}
+
+func (h *Host) String() string {
+	return fmt.Sprintf("%s:  %s", h.name, h.state)
 }
 
 func (h *Host) getHostState() {
@@ -169,4 +200,52 @@ func (h *Host) getHostState() {
 	// fmt.Printf("host return: %q\n", out.String())
 
 	h.state = HOST_LIVE
+}
+
+type TaskState int
+
+const (
+	TASK_NULL TaskState = iota
+	TASK_RUNNING
+	TASK_DONE
+	TASK_FAIL
+)
+
+func (ts TaskState) String() string {
+	switch ts {
+	case TASK_NULL:
+		return "TASK_NULL"
+	case TASK_RUNNING:
+		return "TASK_RUNNING"
+	case TASK_DONE:
+		return "TASK_DONE"
+	case TASK_FAIL:
+		return "TASK_FAIL"
+	}
+	return "TASK_NULL"
+}
+
+type Task struct {
+	state TaskState
+
+	wkr_args []string
+	ssh_args []string
+}
+
+func (t *Task) Run() {
+	fmt.Println("ssh", t.ssh_args)
+	// return
+
+	cmd := exec.Command("ssh", t.ssh_args...)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+
+	t.state = TASK_RUNNING
+	err := cmd.Run()
+	if err != nil {
+		log.Println(err)
+		t.state = TASK_FAIL
+		return
+	}
+	t.state = TASK_DONE
 }

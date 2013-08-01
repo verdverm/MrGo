@@ -15,23 +15,22 @@ type MyMapReduce struct {
 
 // optional function
 func (mr *MyMapReduce) Init() {
-	// always call the MR.Init()
-	mr.MapReduceBase.Init()
-
 	fmt.Println("MyInit")
 }
 
-func (mr *MyMapReduce) Map() {
+func (mr *MyMapReduce) Map(input string) (output string) {
 	fmt.Println("MyMap")
+
+	return "mymap"
 }
 
-func (mr *MyMapReduce) Reduce() {
+func (mr *MyMapReduce) Reduce(input chan string) (output string) {
 	fmt.Println("MyReduce")
+
+	return "myreduce"
 }
 
 // optinonal function
 func (mr *MyMapReduce) Finish() {
-	// always call the MR.Init()
-	mr.MapReduceBase.Finish()
-
+	fmt.Println("MyFinish")
 }
