@@ -76,7 +76,7 @@ func (s *Scheduler) Run() {
 			fmt.Sprintf("-id=%d", i),
 			fmt.Sprintf("-reduces=%d", s.config.NumReduces),
 			fmt.Sprintf("-phases=%d", s.config.NumPhases),
-			fmt.Sprintf("-tmpdir=%s", s.config.Temp),
+			fmt.Sprintf("-dir=%s", s.config.Temp),
 		}
 		// setup t
 		tasks <- t

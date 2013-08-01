@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	arg_config = flag.String("conf", "conf/default.conf", "config file for MrGo")
-	arg_split  = flag.Bool("split", false, "split files in input dir into chunks")
+	arg_dir   = flag.String("dir", ".", "base dir for MrGo to find files")
+	arg_split = flag.Bool("split", false, "split files in input dir into chunks")
 )
 
 func main() {
@@ -19,7 +19,7 @@ func main() {
 	fmt.Println("Hello, World!")
 
 	var mgc MR.MrGoConfig
-	mgc.ReadConfig(*arg_config)
+	mgc.ReadConfig(*arg_dir + "/conf/default.conf")
 
 	var sched MR.Scheduler
 	sched.SetConfig(mgc)

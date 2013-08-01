@@ -9,6 +9,7 @@ import (
 
 type MrGoConfig struct {
 	// paths
+	Base,
 	Input,
 	Temp,
 	Output string
@@ -25,6 +26,11 @@ type MrGoConfig struct {
 
 func (mgc *MrGoConfig) ReadConfig(filename string) {
 	c, err := config.ReadDefault(filename)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	mgc.Base, err = c.String("DEFAULT", "BaseDir")
 	if err != nil {
 		log.Fatalln(err)
 	}
