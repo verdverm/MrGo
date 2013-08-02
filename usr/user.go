@@ -2,14 +2,9 @@ package usr
 
 import (
 	"fmt"
-
-	MR "github.com/verdverm/MrGo/mr"
 )
 
 type MyMapReduce struct {
-	// do not remove this
-	MR.MapReduceBase
-
 	// add any additional data or variables you need here
 }
 

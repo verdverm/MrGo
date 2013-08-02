@@ -74,9 +74,7 @@ func (s *Scheduler) Run() {
 			"gocode/bin/MrWorker",
 			"-task=map",
 			fmt.Sprintf("-id=%d", i),
-			fmt.Sprintf("-reduces=%d", s.config.NumReduces),
-			fmt.Sprintf("-phases=%d", s.config.NumPhases),
-			fmt.Sprintf("-dir=%s", s.config.Base),
+			fmt.Sprintf("-conf=%s", s.config.Base+"/conf/default.conf"),
 		}
 		// setup t
 		tasks <- t

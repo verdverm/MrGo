@@ -8,6 +8,7 @@ import (
 	"log"
 	"runtime"
 
+	MR "github.com/verdverm/MrGo/mr"
 	USER "github.com/verdverm/MrGo/usr"
 )
 
@@ -18,16 +19,14 @@ var (
 	arg_task   = flag.String("task", "", "[map or reduce], you choose")
 	arg_taskid = flag.Int("id", -1, "id of the current task")
 
-	arg_reduces = flag.Int("reduces", 1, "number of reducer processes")
-	arg_phases  = flag.Int("phases", 1, "current phase of reduce stages")
-	arg_phase   = flag.Int("phase", 1, "current phase of reduce stages")
-
-	arg_dir = flag.String("dir", "MrGo", "base directory for finding files")
+	arg_conf = flag.String("conf", "conf/default.conf", "location of the configuration file")
 )
 
 func init() {
 	flag.Parse()
 }
+
+var mgc MR.MrGoConfig
 
 func main() {
 
@@ -35,6 +34,8 @@ func main() {
 
 	// printFlags(os.Stdout)
 	checkFlags()
+
+	mgc.ReadConfig(*arg_conf)
 
 	// start mapping process
 	if *arg_task == "map" {
@@ -55,7 +56,7 @@ func runMap() {
 	// for parallel execution on a single node
 	numCPU := runtime.NumCPU()
 	// open & partition file for each Map goroutine
-	inFn := fmt.Sprintf("%s/file%4d", *arg_dir, *arg_taskid)
+	inFn := fmt.Sprintf("%s/file%02d", mgc.Input, *arg_taskid)
 	data, err := ioutil.ReadFile(inFn)
 	if err != nil {
 		log.Fatalln(err)
@@ -74,15 +75,20 @@ func runMap() {
 		go func() {
 			S, E := s, e
 
-			mr := new(MRTYPE)
+			// mr := new(MRTYPE)
+			mr := new(USER.MyMapReduce)
 			done <- mr.Map(string(data[S:E]))
 		}()
 	}
 
 	for i := 0; i < numCPU; i++ {
 		result := <-done
-		outFn := fmt.Sprintf("%s/tmp/temp_t%4d_p%2d_i%2d", *arg_dir, *arg_taskid, *arg_phases, i)
-		ioutil.WriteFile(outFn, []byte(result), 0644)
+		fmt.Println("GOT HERE:", i)
+		outFn := fmt.Sprintf("%s/temp_t%02d_p%02d_i%02d", mgc.Temp, *arg_taskid, mgc.NumPhases, i)
+		err := ioutil.WriteFile(outFn, []byte(result), 0644)
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
 }
 
