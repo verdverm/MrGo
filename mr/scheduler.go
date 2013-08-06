@@ -1,11 +1,9 @@
 package mr
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"log"
-	"os/exec"
 	"strings"
 )
 
@@ -74,7 +72,7 @@ func (s *Scheduler) Run() {
 			"gocode/bin/MrWorker",
 			"-task=map",
 			fmt.Sprintf("-id=%d", i),
-			fmt.Sprintf("-conf=%s", s.config.Base+"/conf/default.conf"),
+			fmt.Sprintf("-conf=%s", "MrGo/conf/default.conf"),
 		}
 		// setup t
 		tasks <- t
@@ -152,114 +150,4 @@ func (s *Scheduler) initHostInfo() {
 	// 	fmt.Printf("%s:  %s\n", h.name, h.state)
 	// }
 
-}
-
-type HostState int
-
-const (
-	HOST_NULL HostState = iota
-	HOST_LIVE
-	HOST_DEAD
-	HOST_XXXX
-)
-
-func (hs HostState) String() string {
-	switch hs {
-	case HOST_NULL:
-		return "HOST_NULL"
-	case HOST_LIVE:
-		return "HOST_LIVE"
-	case HOST_DEAD:
-		return "HOST_DEAD"
-	case HOST_XXXX:
-		return "HOST_XXXX"
-	}
-	return "HOST_NULL"
-}
-
-type Host struct {
-	id    int
-	name  string
-	state HostState
-}
-
-func (h *Host) String() string {
-	return fmt.Sprintf("%s:  %s", h.name, h.state)
-}
-
-func (h *Host) getHostState() {
-	cmd := exec.Command("ssh", "-o StrictHostKeyChecking=no", "-o ConnectTimeout=6", h.name, "ls")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
-	if err != nil {
-		// log.Println(err)
-		h.state = HOST_DEAD
-		return
-	}
-	// fmt.Printf("host return: %q\n", out.String())
-
-	h.state = HOST_LIVE
-}
-
-type TaskState int
-
-const (
-	TASK_NULL TaskState = iota
-	TASK_RUNNING
-	TASK_DONE
-	TASK_FAIL
-)
-
-func (ts TaskState) String() string {
-	switch ts {
-	case TASK_NULL:
-		return "TASK_NULL"
-	case TASK_RUNNING:
-		return "TASK_RUNNING"
-	case TASK_DONE:
-		return "TASK_DONE"
-	case TASK_FAIL:
-		return "TASK_FAIL"
-	}
-	return "TASK_NULL"
-}
-
-type Task struct {
-	state TaskState
-
-	wkr_args []string
-	ssh_args []string
-}
-
-func (t *Task) Run() {
-
-	// ssh_args := strings.Join(t.ssh_args, " ")
-
-	fmt.Println(len(t.ssh_args), t.ssh_args)
-
-	cmd := exec.Command(
-		t.ssh_args[0],
-		t.ssh_args[1],
-		t.ssh_args[2],
-		t.ssh_args[3],
-		t.ssh_args[4],
-		// "ls -l",
-		// t.ssh_args[5],
-		// t.ssh_args[6],
-		// t.ssh_args[7],
-		// t.ssh_args[8],
-		// t.ssh_args[9],
-	)
-	var out bytes.Buffer
-	cmd.Stdout = &out
-
-	t.state = TASK_RUNNING
-	err := cmd.Run()
-	if err != nil {
-		log.Println(err)
-		t.state = TASK_FAIL
-		return
-	}
-	t.state = TASK_DONE
 }
