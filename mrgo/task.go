@@ -1,4 +1,4 @@
-package mr
+package mrgo
 
 import (
 	"bytes"

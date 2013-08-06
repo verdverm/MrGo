@@ -2,6 +2,11 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"log"
+	"strings"
+
+	"github.com/verdverm/MrGo/mrgo"
 )
 
 func init() {
@@ -23,7 +28,7 @@ func initHostInfo() {
 
 	hostnames := strings.Split(string(data), "\n")
 
-	hosts := make([]*Host, 0)
+	hosts := make([]*mrgo.Host, 0)
 	done := make(chan int, 128)
 
 	for i, h := range hostnames {
@@ -31,30 +36,30 @@ func initHostInfo() {
 		if len(h) < 1 {
 			continue
 		}
-		host := new(Host)
-		host.id = i
-		host.name = h
-		host.state = HOST_NULL
+		host := new(mrgo.Host)
+		host.Id = i
+		host.Name = h
+		host.State = mrgo.HOST_NULL
 		if h[0] == '#' {
-			host.name = strings.TrimSpace(h[1:])
-			host.state = HOST_XXXX
+			host.Name = strings.TrimSpace(h[1:])
+			host.State = mrgo.HOST_XXXX
 		}
-		s.hosts = append(s.hosts, host)
+		hosts = append(hosts, host)
 
 		go func() {
-			if host.state != HOST_XXXX {
-				host.getHostState()
+			if host.State != mrgo.HOST_XXXX {
+				host.GetHostState()
 			}
 			done <- 1
 		}()
 	}
 
-	for i := 0; i < len(s.hosts); i++ {
+	for i := 0; i < len(hosts); i++ {
 		<-done
 	}
 
-	// for _, h := range s.hosts {
-	// 	fmt.Printf("%s:  %s\n", h.name, h.state)
-	// }
+	for _, h := range hosts {
+		fmt.Printf("%s:  %s\n", h.Name, h.State)
+	}
 
 }

@@ -1,4 +1,4 @@
-package mr
+package mrgo
 
 import (
 	"bytes"
@@ -29,6 +29,44 @@ func (hs HostState) String() string {
 	return "HOST_NULL"
 }
 
+type Host struct {
+	Id    int
+	Name  string
+	State HostState
+}
+
+func (h *Host) String() string {
+	return fmt.Sprintf("%s:  %s", h.Name, h.State)
+}
+
+func (h *Host) GetHostState() {
+	err := h.RunCommand("aworm1", "ls")
+	if err != nil {
+		// log.Println(err)
+		h.State = HOST_DEAD
+		return
+	}
+	// fmt.Printf("host return: %q\n", out.String())
+
+	h.State = HOST_LIVE
+}
+
+func (h *Host) RunCommand(user, command string) error {
+	ssh_cmd := sshRunStrings(user, h.Name, command)
+	cmd := exec.Command(ssh_cmd[0], ssh_cmd[1:]...)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	return cmd.Run()
+}
+
+func (h *Host) StartCommand(user, command string) error {
+	ssh_cmd := sshStartStrings(user, h.Name, command)
+	cmd := exec.Command(ssh_cmd[0], ssh_cmd[1:]...)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	return cmd.Run()
+}
+
 var (
 	ssh_args = []string{
 		"ssh",
@@ -55,42 +93,4 @@ func sshStartStrings(user, host, command string) []string {
 	ssh_cmd[3] = user + "@" + host
 	ssh_cmd[4] = "nohup bash " + command
 	return ssh_cmd
-}
-
-type Host struct {
-	id    int
-	name  string
-	state HostState
-}
-
-func (h *Host) String() string {
-	return fmt.Sprintf("%s:  %s", h.name, h.state)
-}
-
-func (h *Host) getHostState() {
-	err := h.RunCommand("aworm1", "ls")
-	if err != nil {
-		// log.Println(err)
-		h.state = HOST_DEAD
-		return
-	}
-	// fmt.Printf("host return: %q\n", out.String())
-
-	h.state = HOST_LIVE
-}
-
-func (h *Host) RunCommand(user, command string) error {
-	ssh_cmd := sshRunStrings(user, h.name, command)
-	cmd := exec.Command(ssh_cmd[0], ssh_cmd[1:]...)
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	return cmd.Run()
-}
-
-func (h *Host) StartCommand(user, command string) error {
-	ssh_cmd := sshStartStrings(user, h.name, command)
-	cmd := exec.Command(ssh_cmd[0], ssh_cmd[1:]...)
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	return cmd.Run()
 }

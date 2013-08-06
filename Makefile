@@ -9,10 +9,10 @@ default_target: dev
 # Main build rules
 #=============================================================================
 
-dev: directories master
+dev: directories head
 .PHONY : dev
 
-all: directories master worker head node
+all: directories head node
 .PHONY : all
 
 clean:
@@ -28,18 +28,6 @@ clean:
 directories:
 	@mkdir -p bin
 .PHONY : directories
-
-master:
-	@echo "[building]  master"
-	@go build -o master main/master.go
-	@mv master bin/master
-.PHONY : master
-
-worker:
-	@echo "[building]  worker"
-	@go build -o worker main/worker.go
-	@mv worker bin/worker
-.PHONY : worker
 
 head:
 	@echo "[building]  head"
