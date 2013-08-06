@@ -36,55 +36,6 @@ func (s *Scheduler) Init() {
 func (s *Scheduler) Run() {
 	fmt.Println("Scheduler Starting\n------------------\n")
 
-	fmt.Println("Splitting...\n")
-	fmt.Println("assuming split already...")
-
-	// ioutil.ReadDir(s.config.Input)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-	// etc...
-	// ...
-
-	fmt.Println("Mapping...\n")
-
-	hosts := make([]*Host, 0)
-	for i := 0; len(hosts) < s.config.MaxNodes; i++ {
-		if i == len(s.hosts) {
-			log.Fatalln("Not enough Live Hosts for number of requested nodes")
-		}
-		if s.hosts[i].state == HOST_LIVE {
-			hosts = append(hosts, s.hosts[i])
-		}
-	}
-
-	tasks := make(chan *Task, s.config.NumMaps)
-	done := make(chan int)
-
-	// start runner goroutines
-	for i := 0; i < s.config.MaxNodes; i++ {
-		go runner(hosts[i], tasks, done)
-	}
-
-	for i := 0; i < s.config.NumMaps; i++ {
-		t := new(Task)
-		t.wkr_args = []string{
-			"gocode/bin/MrWorker",
-			"-task=map",
-			fmt.Sprintf("-id=%d", i),
-			fmt.Sprintf("-conf=%s", "MrGo/conf/default.conf"),
-		}
-		// setup t
-		tasks <- t
-	}
-
-	fmt.Println("Waiting for map to finish")
-	for i := 0; i < s.config.NumMaps; i++ {
-		<-done
-	}
-
-	fmt.Println("Reducing...\n")
-
 	fmt.Println("Scheduler Done")
 }
 

@@ -2,7 +2,6 @@ package mr
 
 import (
 	"log"
-	"math"
 
 	"github.com/robfig/config"
 )
@@ -17,11 +16,6 @@ type MrGoConfig struct {
 	// hosts
 	HostFile string
 	MaxNodes int
-
-	// M/R params
-	NumMaps,
-	NumReduces,
-	NumPhases int
 }
 
 func (mgc *MrGoConfig) ReadConfig(filename string) {
@@ -58,25 +52,6 @@ func (mgc *MrGoConfig) ReadConfig(filename string) {
 	mgc.MaxNodes, err = c.Int("DEFAULT", "MaxNodes")
 	if err != nil {
 		log.Fatalln(err)
-	}
-
-	mgc.NumMaps, err = c.Int("DEFAULT", "NumMaps")
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	mgc.NumReduces, err = c.Int("DEFAULT", "NumReduces")
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	mgc.NumPhases, err = c.Int("DEFAULT", "NumPhases")
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	if math.Pow(float64(mgc.NumReduces), float64(mgc.NumPhases)) > float64(mgc.NumMaps) {
-		log.Fatalln("Error:  Reduces/Phases is greater than the number of Maps")
 	}
 
 }
